@@ -1,20 +1,20 @@
-/*
-------------------------------------------------------------------------------
-Copyright IBM Corp. 2018
+// ------------------------------------------------------------------------------
+// Copyright IBM Corp. 2018
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------------
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-------------------------------------------------------------------------------
-*/
+// Package icrbuild ...
 package icrbuild
 
 import (
@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// BuildFlags are the flags for the docker build
 type BuildFlags struct {
 	NoCache   bool
 	Pull      bool
@@ -40,6 +41,7 @@ type BuildFlags struct {
 	Tag       string
 }
 
+// BuildOptions hold the io streams for the build
 type BuildOptions struct {
 	In  io.Reader
 	Out io.Writer
@@ -48,11 +50,12 @@ type BuildOptions struct {
 	Flags BuildFlags
 }
 
+// BuildRunner holds the the method that runs the build
 type BuildRunner interface {
 	Run(cmd *cobra.Command, args []string) error
 }
 
-// NewBuildOptions
+// NewBuildOptions hold the streams for the build
 func NewBuildOptions(in io.Reader, out io.Writer, err io.Writer) *BuildOptions {
 	return &BuildOptions{
 		In:  in,
@@ -61,6 +64,7 @@ func NewBuildOptions(in io.Reader, out io.Writer, err io.Writer) *BuildOptions {
 	}
 }
 
+// Run the method that runs the build
 func (o *BuildOptions) Run(cmd *cobra.Command, args []string) error {
 
 	var (

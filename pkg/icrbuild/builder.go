@@ -1,20 +1,20 @@
-/*
-------------------------------------------------------------------------------
-Copyright IBM Corp. 2018
+// ------------------------------------------------------------------------------
+// Copyright IBM Corp. 2018
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------------
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-------------------------------------------------------------------------------
-*/
+// Package icrbuild ...
 package icrbuild
 
 import (
@@ -31,7 +31,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Use the standard Docker APIs to leverage standard CLI impementation
+// Builder to ise the standard Docker APIs to leverage standard CLI impementation
 type Builder struct {
 	client.APIClient
 	registryClient *IBMRegistrySession
@@ -42,7 +42,7 @@ type builderCLI struct {
 	builder *Builder
 }
 
-// NewBuildClient with the IBM Cloud Container Registry CLIs
+// NewBuilder with the IBM Cloud Container Registry CLIs
 func NewBuilder(registryClient *IBMRegistrySession) *Builder {
 	return &Builder{
 		registryClient: registryClient,
@@ -68,7 +68,7 @@ func (o *Builder) ImageBuild(_ context.Context, buildctx io.Reader, opts types.I
 	if opts.BuildArgs != nil && len(opts.BuildArgs) > 0 {
 		buildArgBytes, err = json.Marshal(opts.BuildArgs)
 		if err != nil {
-			return buildResponse,errors.Wrap(err, "Unable to marshal build args as json")
+			return buildResponse, errors.Wrap(err, "Unable to marshal build args as json")
 		}
 	}
 
