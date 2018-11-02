@@ -1,19 +1,20 @@
 /*
-Copyright 2018 The Skaffold Authors
+------------------------------------------------------------------------------
+Copyright IBM Corp. 2018
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+------------------------------------------------------------------------------
 */
-
 package icrbuild
 
 import (
@@ -53,6 +54,19 @@ type configJSON struct {
 	SSLDisabled bool `json:"SSLDisabled"`
 }
 
+// Same structs used by knative credentials
+type entry struct {
+	Secret   string `json:"-"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Auth     string `json:"auth"`
+	Email    string `json:"email"`
+}
+
+type dockerConfig struct {
+	Entries map[string]entry `json:"auths"`
+}
+
 // NewRegistryClient Authenticates with IBM Cloud using provided API Key
 // Fixes the image name if the registry name isn't part of it
 func NewRegistryClient(imageName string) (*IBMRegistrySession, string, error) {
@@ -71,7 +85,24 @@ func NewRegistryClient(imageName string) (*IBMRegistrySession, string, error) {
 		err         error
 	)
 
-	if c.BluemixAPIKey == "" {
+	endpoint = getRegistryEndpoint(imageName)
+	if endpoint == nil {
+		var registry string
+
+		registry, err = endpoints.NewEndpointLocator(c.Region).ContainerRegistryEndpoint()
+		if err != nil {
+			return nil, imageName, errors.Wrap(err, "Unsupported IBM Cloud default region")
+		}
+		endpoint = &registry
+		imageName, err = addRegistry(registry, imageName)
+		if err != nil {
+			return nil, imageName, err
+		}
+	}
+
+	_,err = configFromDocker(c,*endpoint)
+
+	if err != nil || c.BluemixAPIKey == "" {
 		account, err = configFromJSON(c)
 		if err != nil {
 			return nil, imageName, errors.Wrap(err, "IBM Cloud configuration error.")
@@ -93,20 +124,7 @@ func NewRegistryClient(imageName string) (*IBMRegistrySession, string, error) {
 		}
 		account = userInfo.Account.Bss
 	}
-	endpoint = getRegistryEndpoint(imageName)
-	if endpoint == nil {
-		var registry string
 
-		registry, err = endpoints.NewEndpointLocator(c.Region).ContainerRegistryEndpoint()
-		if err != nil {
-			return nil, imageName, errors.Wrap(err, "Unsupported IBM Cloud default region")
-		}
-		endpoint = &registry
-		imageName, err = addRegistry(registry, imageName)
-		if err != nil {
-			return nil, imageName, err
-		}
-	}
 	c.Endpoint = endpoint
 	registryAPI, err = registryv1.New(authSession)
 	if err != nil {
@@ -198,4 +216,41 @@ func configFromJSON(icconfig *ibmcloud.Config) (accountID string, err error) {
 		}
 	}
 	return accountID, err
+}
+
+// If the authenticated with hav
+func configFromDocker(icconfig *ibmcloud.Config, endpoint string) (accountID string, err error) {
+	var (
+		config    *dockerConfig
+		jsonFile  *os.File
+		usr       *user.User
+		byteValue []byte
+	)
+
+	config = new(dockerConfig)
+	usr, err = user.Current()
+	if err == nil {
+		jsonFile, err = os.Open(usr.HomeDir + "/.docker/config.json")
+		defer func() {
+			cerr := jsonFile.Close()
+			if err == nil {
+				err = cerr
+			}
+		}()
+		if err == nil {
+			byteValue, err = ioutil.ReadAll(jsonFile)
+			if err == nil {
+				err = json.Unmarshal(byteValue, config)
+				if err == nil {
+					if entry, ok := config.Entries[endpoint]; ok {
+						//Only API keys stored as passwords are supported
+						icconfig.BluemixAPIKey = entry.Password
+					} else {
+						err = errors.Errorf("Registry %s not found in docker creds!", endpoint)
+					}
+				}
+			}
+		}
+	}
+	return "", err
 }
