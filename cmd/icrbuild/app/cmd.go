@@ -5,26 +5,24 @@ import (
 	"io"
 	"os"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"github.com/IBM-Cloud/container-registry-builder/pkg/icrbuild"
 	"github.com/IBM-Cloud/container-registry-builder/pkg/icrbuild/version"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-var (
-		logLevel string
-)
+const logLevel = "debug"
 
 // NewJXCommand creates the `jx` command and its nested children.
 func NewCommand(in io.Reader, out io.Writer, err io.Writer) *cobra.Command {
-	options := icrbuild.NewBuildOptions(in,out,err)
+	options := icrbuild.NewBuildOptions(in, out, err)
 	cmd := &cobra.Command{
 		Use:   "icrbuild [DIRECTORY]",
 		Short: "Build a Docker image in IBM Cloud Container Registry using builder contract",
-		Args: cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Long: `
  `,
-		Run: func (cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			err := options.Run(cmd, args)
 			if err != nil {
 				logrus.Error(err)
@@ -43,10 +41,10 @@ func NewCommand(in io.Reader, out io.Writer, err io.Writer) *cobra.Command {
 	cmd.Version = fmt.Sprintf("%+v", version.Get())
 	cmd.SetVersionTemplate("{{printf .Version}}\n")
 
-//	[--no-cache] [--pull] [--quiet | -q] [--build-arg KEY=VALUE ...] [--file FILE | -f FILE] --tag TAG DIRECTORY
+	//	[--no-cache] [--pull] [--quiet | -q] [--build-arg KEY=VALUE ...] [--file FILE | -f FILE] --tag TAG DIRECTORY
 	cmd.PersistentFlags().BoolVar(&options.Flags.NoCache, "no-cache", false, "Optional: If specified, cached image layers from previous builds are not used in this build.")
 	cmd.PersistentFlags().BoolVar(&options.Flags.Pull, "pull", false, "Optional: If specified, the base images are pulled even if an image with a matching tag already exists on the build host.")
-	cmd.PersistentFlags().BoolVarP(&options.Flags.Quiet, "quiet","q", false, "Optional: If specified, the build output is suppressed unless an error occurs.")
+	cmd.PersistentFlags().BoolVarP(&options.Flags.Quiet, "quiet", "q", false, "Optional: If specified, the build output is suppressed unless an error occurs.")
 	cmd.PersistentFlags().StringArrayVar(&options.Flags.BuildArgs, "build-arg", nil, "Optional: Specify an additional build argument in the format 'KEY=VALUE'. The value of each build argument is available as an environment variable when you specify an ARG line that matches the key in your Dockerfile.")
 	cmd.PersistentFlags().StringVarP(&options.Flags.File, "file", "f", "", "Optional: Specify the location of the Dockerfile relative to the build context. If not specified, the default is 'PATH/Dockerfile', where PATH is the root of the build context.")
 	cmd.PersistentFlags().StringVarP(&options.Flags.Tag, "tag", "t", "", "The full name for the image that you want to build, which includes the registry URL and namespace.")
@@ -68,7 +66,6 @@ func setUpLogs(out io.Writer) error {
 func runHelp(cmd *cobra.Command, args []string) {
 	cmd.Help()
 }
-
 
 func Run() error {
 	cmd := NewCommand(os.Stdin, os.Stdout, os.Stderr)

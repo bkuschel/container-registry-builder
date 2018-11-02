@@ -24,11 +24,9 @@ type BuildFlags struct {
 }
 
 type BuildOptions struct {
-	In   io.Reader
-	Out  io.Writer
-	Err  io.Writer
-	Cmd  *cobra.Command
-	Args []string
+	In  io.Reader
+	Out io.Writer
+	Err io.Writer
 
 	Flags BuildFlags
 }
@@ -49,11 +47,11 @@ func NewBuildOptions(in io.Reader, out io.Writer, err io.Writer) *BuildOptions {
 func (o *BuildOptions) Run(cmd *cobra.Command, args []string) error {
 
 	var (
-		registryClient                    *IBMRegistrySession
-		imageName,buildContext string
-		err                               error
-		cli                               *builderCLI
-		ccmd                              *cobra.Command
+		registryClient          *IBMRegistrySession
+		imageName, buildContext string
+		err                     error
+		cli                     *builderCLI
+		ccmd                    *cobra.Command
 	)
 
 	if !reference.ReferenceRegexp.MatchString(o.Flags.Tag) {
@@ -67,7 +65,7 @@ func (o *BuildOptions) Run(cmd *cobra.Command, args []string) error {
 
 	logrus.Debugf("Running IBM Container Registry build: context: %s, dockerfile: %s", args[0], o.Flags.File)
 
-	buildContext, err = filepath.Abs(o.Args[0])
+	buildContext, err = filepath.Abs(args[0])
 	if err != nil {
 		logrus.Errorf("Error parsing build context: %v", err)
 		return errors.Wrap(err, "Docker build Context error! Check supplied context path")
