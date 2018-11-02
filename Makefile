@@ -1,10 +1,22 @@
 PACKAGE  = icrbuild
-DATE    ?= $(shell date +%FT%T%z)
+ORG := github.com/IBM-Cloud
+PROJECT := container-registry-builder
+REPOPATH ?= $(ORG)/$(PROJECT)
+
+COMMIT = $(shell git rev-parse HEAD)
 VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || \
 			cat $(CURDIR)/.version 2> /dev/null || echo v0)
 PKGS     = $(or $(PKG),$(shell env GO111MODULE=on $(GO) list ./...))
 TESTPKGS = $(shell env GO111MODULE=on $(GO) list -f '{{ if or .TestGoFiles .XTestGoFiles }}{{ .ImportPath }}{{ end }}' $(PKGS))
 BIN      = $(CURDIR)/bin
+VERSION_PACKAGE = $(REPOPATH)/pkg/icrbuild/version
+
+GO_LDFLAGS :="
+GO_LDFLAGS += -X $(VERSION_PACKAGE).version=$(VERSION)
+GO_LDFLAGS += -X $(VERSION_PACKAGE).buildDate=$(shell date +'%Y-%m-%dT%H:%M:%SZ')
+GO_LDFLAGS += -X $(VERSION_PACKAGE).gitCommit=$(COMMIT)
+GO_LDFLAGS += -X $(VERSION_PACKAGE).gitTreeState=$(if $(shell git status --porcelain),dirty,clean)
+GO_LDFLAGS +="
 
 GO      = go
 GODOC   = godoc
@@ -19,7 +31,7 @@ export GO111MODULE=on
 all: fmt lint $(BIN) ; $(info $(M) building executable…) @ ## Build program binary
 	$Q $(GO) build \
 		-tags release \
-		-ldflags '-X $(PACKAGE)/cmd.Version=$(VERSION) -X $(PACKAGE)/cmd.BuildDate=$(DATE)' \
+		-ldflags $(GO_LDFLAGS) \
 		-o $(BIN)/$(PACKAGE) cmd/icrbuild/icrbuild.go
 
 # Tools
